@@ -10,7 +10,10 @@ import { makeQueue } from "./queue.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const PUBLIC_DIR = path.resolve(__dirname, "../../public");
+// FIX: Сначала берем путь из .env (для Docker), иначе ищем локально
+const PUBLIC_DIR =
+  process.env.PUBLIC_DIR || path.resolve(__dirname, "../../public");
+// FIX: Аналогично для папки загрузок
 const DOWNLOAD_DIR =
   process.env.DOWNLOAD_DIR || path.join(process.cwd(), "downloaded");
 
@@ -21,7 +24,7 @@ const REDIS_CONFIG = {
 
 const fastify = Fastify({
   logger: true,
-  disableRequestLogging: true,
+  disableRequestLogging: false,
 });
 
 const queue = makeQueue(REDIS_CONFIG);
@@ -30,6 +33,12 @@ await fastify.register(rateLimit, {
   max: 600,
   timeWindow: "1 minute",
 });
+
+// Проверка: если папка public не найдена, сервер сразу скажет об этом и упадет, а не будет молчать
+if (!fs.existsSync(PUBLIC_DIR)) {
+  console.error(`[Fatal] Папка PUBLIC_DIR не найдена по пути: ${PUBLIC_DIR}`);
+  process.exit(1);
+}
 
 await fastify.register(staticPlugin, {
   root: PUBLIC_DIR,
@@ -57,9 +66,7 @@ fastify.post(
   },
   async (req, reply) => {
     const { url, kind, quality } = req.body;
-
     const job = await queue.add("download", { url, kind, quality });
-
     return { jobId: job.id };
   }
 );
@@ -73,6 +80,8 @@ fastify.get("/api/jobs/:id", async (req, reply) => {
 
   const state = await job.getState();
   const result = job.returnvalue || {};
+  const error =
+    job.failedReason || (state === "failed" ? "Unknown error" : null);
 
   return {
     id: job.id,
@@ -80,12 +89,13 @@ fastify.get("/api/jobs/:id", async (req, reply) => {
     url: job.data.url,
     file: result.file || null,
     progress: job.progress,
-    error: job.failedReason || null,
+    error: error,
   };
 });
 
 fastify.get("/api/download/:filename", async (req, reply) => {
   const { filename } = req.params;
+  // Защита от выхода из папки (чтобы нельзя было скачать /etc/passwd)
   const safeName = path.basename(filename);
   const filePath = path.join(DOWNLOAD_DIR, safeName);
 
@@ -94,14 +104,14 @@ fastify.get("/api/download/:filename", async (req, reply) => {
   }
 
   reply.header("Content-Disposition", `attachment; filename="${safeName}"`);
-
   return reply.send(fs.createReadStream(filePath));
 });
 
 try {
-  const port = Number(process.env.PORT || 3000);
+  const port = Number(process.env.APP_PORT || 3000);
   await fastify.listen({ port, host: "0.0.0.0" });
-  console.log(`Сервер запущен http://localhost:${port}`);
+  console.log(`Сервер запущен: http://0.0.0.0:${port}`);
+  console.log(`Frontend раздается из: ${PUBLIC_DIR}`);
 } catch (err) {
   fastify.log.error(err);
   process.exit(1);
