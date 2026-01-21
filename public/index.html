@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>DownloadMercy</title>
+
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>DownloadMercy</h1>
+
+      <form id="videoForm">
+        <label class="label">
+          Вставьте ссылку на видео:
+          <input
+            class="input"
+            type="text"
+            name="videoUrl"
+            placeholder="https://youtube.com/..."
+            required
+          />
+        </label>
+
+        <div class="actions">
+          <button id="downloadBtn" class="btn btn-primary" type="submit">
+            Скачать видео
+          </button>
+
+          <button id="mp3Btn" class="btn btn-secondary" type="button">
+            MP3
+          </button>
+
+          <button id="thumbBtn" class="btn btn-secondary" type="button">
+            Превью
+          </button>
+        </div>
+
+        <div class="options">
+          <span class="option-label">Качество:</span>
+          <select id="qualitySelect" class="select">
+            <option value="best" selected>Лучшее</option>
+            <option value="1080">1080p</option>
+            <option value="720">720p</option>
+            <option value="480">480p</option>
+            <option value="360">360p</option>
+          </select>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div id="progressWrap" style="margin-top: 10px; display: none">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              font-size: 14px;
+            "
+          >
+            <span id="progressText">0%</span>
+            <span id="progressMeta"></span>
+          </div>
+          <div style="border: 2px solid #000; height: 14px; margin-top: 6px">
+            <div
+              id="progressBar"
+              style="height: 100%; width: 0%; background: #000"
+            ></div>
+          </div>
+        </div>
+
+        <div id="result" class="result"></div>
+      </form>
+    </div>
+
+    <script src="js/script.js"></script>
+  </body>
+</html>
