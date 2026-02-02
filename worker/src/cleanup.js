@@ -1,11 +1,12 @@
 import "dotenv/config";
-
 import fs from "node:fs/promises";
 import path from "node:path";
 
 const DOWNLOAD_DIR = process.env.DOWNLOAD_DIR
   ? path.resolve(process.env.DOWNLOAD_DIR)
   : path.resolve(process.cwd(), "downloaded");
+
+const FILE_PREFIX = "dmercy_";
 
 const TTL_HOURS = Number(process.env.FILE_TTL_HOURS || 12);
 const TTL_MS = TTL_HOURS * 60 * 60 * 1000;
@@ -32,6 +33,8 @@ async function cleanup() {
 
     for (const file of files) {
       if (file.startsWith(".")) continue;
+
+      if (!file.startsWith(FILE_PREFIX)) continue;
 
       const filePath = path.join(DOWNLOAD_DIR, file);
 
@@ -60,9 +63,10 @@ async function cleanup() {
 }
 
 export function startCleanupService() {
-  console.log("[Cleanup] Сервис очистки запущен.");
+  console.log(
+    "[Cleanup] Сервис очистки запущен. Удаляем только файлы 'dmercy_*'",
+  );
 
   cleanup();
-
   setInterval(cleanup, CHECK_INTERVAL);
 }

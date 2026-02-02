@@ -16,6 +16,8 @@ const DOWNLOAD_DIR = process.env.DOWNLOAD_DIR
   ? path.resolve(process.env.DOWNLOAD_DIR)
   : path.resolve(process.cwd(), "downloaded");
 
+const FILE_PREFIX = "dmercy_";
+
 const CONCURRENCY = Number(process.env.CONCURRENCY || 2);
 
 const BINARIES = {
@@ -61,7 +63,7 @@ function spawnProcess(cmd, args, onProgress) {
       else
         reject(
           new Error(
-            `Process ${cmd} exited with code ${code}.\nStderr: ${stderrLog}`,
+            `Процесс ${cmd} прервался с кодом ${code}.\nStderr: ${stderrLog}`,
           ),
         );
     });
@@ -99,7 +101,9 @@ const worker = new Worker(
     const { url, kind = "video", quality = "best" } = job.data;
     if (!url) throw new Error("URL отсутствует");
 
-    const fileId = crypto.randomBytes(8).toString("hex");
+    const rawId = crypto.randomBytes(8).toString("hex");
+    const fileId = `${FILE_PREFIX}${rawId}`;
+
     const outputTemplate = path.join(DOWNLOAD_DIR, `${fileId}.%(ext)s`);
 
     const args = [
@@ -144,6 +148,7 @@ const worker = new Worker(
     };
 
     console.log(`[Start] ${kind} ${url}`);
+
     await spawnProcess(BINARIES.ytdlp, args, updateJobProgress);
 
     const filename = findOutputFile(fileId);
