@@ -10,10 +10,8 @@ import { makeQueue } from "./queue.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// FIX: Сначала берем путь из .env (для Docker), иначе ищем локально
 const PUBLIC_DIR =
   process.env.PUBLIC_DIR || path.resolve(__dirname, "../../public");
-// FIX: Аналогично для папки загрузок
 const DOWNLOAD_DIR =
   process.env.DOWNLOAD_DIR || path.join(process.cwd(), "downloaded");
 
@@ -34,7 +32,6 @@ await fastify.register(rateLimit, {
   timeWindow: "1 minute",
 });
 
-// Проверка: если папка public не найдена, сервер сразу скажет об этом и упадет, а не будет молчать
 if (!fs.existsSync(PUBLIC_DIR)) {
   console.error(`[Fatal] Папка PUBLIC_DIR не найдена по пути: ${PUBLIC_DIR}`);
   process.exit(1);
@@ -68,7 +65,7 @@ fastify.post(
     const { url, kind, quality } = req.body;
     const job = await queue.add("download", { url, kind, quality });
     return { jobId: job.id };
-  }
+  },
 );
 
 fastify.get("/api/jobs/:id", async (req, reply) => {
@@ -95,7 +92,6 @@ fastify.get("/api/jobs/:id", async (req, reply) => {
 
 fastify.get("/api/download/:filename", async (req, reply) => {
   const { filename } = req.params;
-  // Защита от выхода из папки (чтобы нельзя было скачать /etc/passwd)
   const safeName = path.basename(filename);
   const filePath = path.join(DOWNLOAD_DIR, safeName);
 

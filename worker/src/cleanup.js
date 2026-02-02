@@ -1,4 +1,5 @@
 import "dotenv/config";
+
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -17,7 +18,7 @@ async function cleanup() {
     await fs.access(DOWNLOAD_DIR);
   } catch {
     console.log(
-      `[Cleanup] Папка ${DOWNLOAD_DIR} не найдена. Пропускаем проверку.`
+      `[Cleanup] Папка ${DOWNLOAD_DIR} не найдена. Пропускаем проверку.`,
     );
     return;
   }
@@ -53,7 +54,7 @@ async function cleanup() {
 
   if (deletedCount > 0 || errorsCount > 0) {
     console.log(
-      `[Cleanup] Готово. Удалено: ${deletedCount}, Ошибок: ${errorsCount}`
+      `[Cleanup] Готово. Удалено: ${deletedCount}, Ошибок: ${errorsCount}`,
     );
   }
 }

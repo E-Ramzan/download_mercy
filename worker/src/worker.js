@@ -16,7 +16,6 @@ const DOWNLOAD_DIR = process.env.DOWNLOAD_DIR
   ? path.resolve(process.env.DOWNLOAD_DIR)
   : path.resolve(process.cwd(), "downloaded");
 
-// Берем количество потоков из .env или ставим 2 по умолчанию
 const CONCURRENCY = Number(process.env.CONCURRENCY || 2);
 
 const BINARIES = {
@@ -62,8 +61,8 @@ function spawnProcess(cmd, args, onProgress) {
       else
         reject(
           new Error(
-            `Process ${cmd} exited with code ${code}.\nStderr: ${stderrLog}`
-          )
+            `Process ${cmd} exited with code ${code}.\nStderr: ${stderrLog}`,
+          ),
         );
     });
   });
@@ -86,7 +85,7 @@ function findOutputFile(fileId) {
           f.startsWith(`${fileId}.`) &&
           !f.endsWith(".part") &&
           !f.endsWith(".ytdl") &&
-          !f.endsWith(".f137")
+          !f.endsWith(".f137"),
       ) || null
     );
   } catch (e) {
@@ -121,14 +120,13 @@ const worker = new Worker(
         "--skip-download",
         "--write-thumbnail",
         "--convert-thumbnails",
-        "jpg"
+        "jpg",
       );
     } else {
-      // Оптимизация: ищем видео + m4a аудио (чтобы не конвертировать) или просто лучшее комбо
       if (quality !== "best" && !isNaN(quality)) {
         args.push(
           "-f",
-          `bv*[height<=${quality}]+ba[ext=m4a]/b[height<=${quality}] / bv*+ba/b`
+          `bv*[height<=${quality}]+ba[ext=m4a]/b[height<=${quality}] / bv*+ba/b`,
         );
       } else {
         args.push("-f", "bv*+ba[ext=m4a]/b[ext=mp4] / bv*+ba/b");
@@ -157,13 +155,13 @@ const worker = new Worker(
     connection: REDIS_CONFIG,
     concurrency: CONCURRENCY,
     lockDuration: 60000,
-  }
+  },
 );
 
 worker.on("ready", () => console.log(`[Worker] Готов. Папка: ${DOWNLOAD_DIR}`));
 worker.on("completed", (job, result) =>
-  console.log(`[Job ${job.id}] Успех: ${result.file}`)
+  console.log(`[Job ${job.id}] Успех: ${result.file}`),
 );
 worker.on("failed", (job, err) =>
-  console.error(`[Job ${job.id}] Ошибка: ${err.message}`)
+  console.error(`[Job ${job.id}] Ошибка: ${err.message}`),
 );
